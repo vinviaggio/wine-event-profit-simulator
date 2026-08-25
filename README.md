@@ -1,5 +1,10 @@
 # ワインイベント採算シミュレータ
 
+## 公開URL
+
+- Repository: https://github.com/vinviaggio/wine-event-profit-simulator
+- GitHub Pages: https://vinviaggio.github.io/wine-event-profit-simulator/
+
 ## 概要
 
 ワインイベントについて、参加人数・ワイン銘柄数・第1部実消費率・第2部提供量・平均希望小売価格・仕入率・追加開栓本数などを変更しながら、
@@ -17,7 +22,7 @@
 
 GitHub Pages URL をブラウザで開いて使用する。
 
-https://&lt;GitHubユーザー名&gt;.github.io/wine-event-profit-simulator/
+https://vinviaggio.github.io/wine-event-profit-simulator/
 
 PC・スマートフォンの通常ブラウザで動作する。AIツール（Gemini / Claude 等）を開く必要はない。
 

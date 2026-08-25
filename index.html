@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D'Argento Croce 採算・ワイン提供量シミュレーター</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        wine: {
+                            50: '#fdf2f4',
+                            100: '#fbe6e9',
+                            600: '#8b1d3b',
+                            700: '#72152e',
+                            800: '#5c1226',
+                            900: '#4a1120',
+                        },
+                        navy: {
+                            800: '#1b2432',
+                            900: '#121824',
+                        },
+                        gold: {
+                            400: '#f3c669',
+                            500: '#e5b23d',
+                            600: '#c29227',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Noto Sans JP"', 'sans-serif'],
+                        serif: ['Cinzel', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0f141c;
+            color: #e2e8f0;
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+        .card-dark {
+            background: rgba(27, 36, 50, 0.75);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 0.75rem;
+        }
+        .accent-border {
+            border-left: 4px solid #8b1d3b;
+        }
+        .gold-border {
+            border-left: 4px solid #e5b23d;
+        }
+        /* Range Slider Styling */
+        input[type=range] {
+            accent-color: #8b1d3b;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #121824;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #8b1d3b;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-12">
+
+    <header class="bg-navy-900 border-b border-gray-800 sticky top-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full bg-wine-700 flex items-center justify-center text-gold-400 font-serif text-xl font-bold shadow-md">
+                    DC
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-white tracking-wide flex items-center gap-2">
+                        <span>D'Argento Croce</span>
+                        <span class="text-xs bg-wine-900 text-gold-400 border border-gold-500/30 px-2 py-0.5 rounded font-normal">採算＆ワイン量シミュレーター</span>
+                    </h1>
+                    <p class="text-xs text-gray-400">第1部 試飲会（15名上限） ＋ 第2部 ペアリングワイン会</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3 text-xs">
+                <span class="bg-gray-800 px-3 py-1.5 rounded-full text-gray-300 border border-gray-700">
+                    <i class="fa-solid fa-wine-glass text-wine-600 mr-1"></i>ワイン容量: 750ml/本
+                </span>
+                <span class="bg-gray-800 px-3 py-1.5 rounded-full text-gray-300 border border-gray-700">
+                    <i class="fa-solid fa-calculator text-gold-500 mr-1"></i>独立2ケース比較
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
+
+        <section class="space-y-4">
+            <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-gauge-high text-gold-500"></i>最上位経営判断ダッシュボード
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Block 1: Profitability Evaluation -->
+                <div class="card-dark p-5 accent-border flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-xs font-bold text-gray-400 tracking-wider">① 採算性評価</span>
+                            <span class="text-xs px-2 py-0.5 rounded bg-blue-900/60 text-blue-300 border border-blue-700/50">利益試算</span>
+                        </div>
+                        
+                        <div class="space-y-3 mt-3">
+                            <!-- CASE A -->
+                            <div class="bg-navy-900/80 p-2.5 rounded border border-gray-800">
+                                <div class="text-xs font-semibold text-gray-400 flex justify-between">
+                                    <span>CASE A (理論・保守モデル)</span>
+                                    <span class="text-gray-500">自動計算</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 mt-1">
+                                    <div>
+                                        <div class="text-[10px] text-gray-400">11,000円案</div>
+                                        <div class="text-sm font-bold text-white" id="db-caseA-profit11">-</div>
+                                        <div class="text-[10px] text-gray-400" id="db-caseA-margin11">-</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-[10px] text-gold-400">12,000円案</div>
+                                        <div class="text-sm font-bold text-gold-400" id="db-caseA-profit12">-</div>
+                                        <div class="text-[10px] text-gold-500/80" id="db-caseA-margin12">-</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- CASE B -->
+                            <div class="bg-wine-900/40 p-2.5 rounded border border-wine-700/40">
+                                <div class="text-xs font-semibold text-wine-100 flex justify-between">
+                                    <span>CASE B (手動設定シナリオ)</span>
+                                    <span class="text-xs text-gold-400 font-bold" id="db-caseB-addBottlesLabel">追加-本</span>
+                                </div>
+                                <div class="text-[10px] text-gray-400 italic mb-1">※手動設定に基づく試算利益</div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <div class="text-[10px] text-gray-400">11,000円案</div>
+                                        <div class="text-sm font-bold text-white" id="db-caseB-profit11">-</div>
+                                        <div class="text-[10px] text-gray-400" id="db-caseB-margin11">-</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-[10px] text-gold-400">12,000円案</div>
+                                        <div class="text-sm font-bold text-gold-400" id="db-caseB-profit12">-</div>
+                                        <div class="text-[10px] text-gold-500/80" id="db-caseB-margin12">-</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Block 2: Physical Feasibility Check -->
+                <div class="card-dark p-5 gold-border flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-xs font-bold text-gray-400 tracking-wider">② 提供量の物理的判定</span>
+                            <span id="db-phys-mode-badge" class="text-xs px-2 py-0.5 rounded font-bold bg-amber-900/60 text-amber-300 border border-amber-700/50">
+                                均一残量参考判定
+                            </span>
+                        </div>
+
+                        <!-- CASE A Physics -->
+                        <div class="mt-3 p-2 bg-navy-900/80 rounded border border-gray-800 text-xs">
+                            <div class="flex justify-between font-semibold text-gray-300 mb-1">
+                                <span>CASE A 物理量</span>
+                                <span class="text-emerald-400"><i class="fa-solid fa-circle-check"></i> 常に充足</span>
+                            </div>
+                            <div class="text-gray-400 text-[11px]" id="db-caseA-phys-detail">開栓後全体余剰: - ml</div>
+                        </div>
+
+                        <!-- CASE B Physics -->
+                        <div class="mt-2 p-2 bg-navy-900/80 rounded border border-gray-800 text-xs">
+                            <div class="flex justify-between font-semibold text-gray-300 mb-1">
+                                <span>CASE B 物理量 (主判定)</span>
+                                <span id="db-caseB-phys-status" class="font-bold text-amber-400">-</span>
+                            </div>
+                            <div class="text-gray-300 text-[11px]" id="db-caseB-phys-total">総量判定: -</div>
+                            <div class="text-gray-400 text-[10px] mt-0.5" id="db-caseB-phys-aux"></div>
+                            <div class="text-gray-300 text-[11px] mt-1 pt-1 border-t border-gray-800" id="db-caseB-phys-brand">銘柄別判定: -</div>
+                        </div>
+                    </div>
+
+                    <!-- Warning Banner if Mismatch or Deficit -->
+                    <div id="db-phys-warning" class="mt-2 hidden p-2 bg-rose-950/80 border border-rose-700/60 rounded text-[11px] text-rose-200">
+                        <i class="fa-solid fa-triangle-exclamation mr-1 text-rose-400"></i>
+                        <span id="db-phys-warning-text">注意書きメッセージ</span>
+                    </div>
+                </div>
+
+                <!-- Block 3: Comprehensive Recommendation -->
+                <div class="card-dark p-5 flex flex-col justify-between border-l-4 border-blue-500">
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-xs font-bold text-gray-400 tracking-wider">③ 総合判断・経営コメント</span>
+                            <i class="fa-solid fa-brain text-blue-400 text-sm"></i>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-200 leading-relaxed bg-navy-900/50 p-3 rounded border border-gray-800/80 min-h-[110px]" id="db-summary-comment">
+                            分析中...
+                        </div>
+                    </div>
+                    <div class="mt-3 text-[10px] text-gray-500 text-right">
+                        ※「利益が高いこと」と「物理的提供可能」は独立評価されます。
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- LEFT COLUMN: Control Panels (5 cols) -->
+            <div class="lg:col-span-5 space-y-6">
+
+                <!-- Control Panel Card -->
+                <div class="card-dark p-5 space-y-5">
+                    <h3 class="text-base font-bold text-white border-b border-gray-800 pb-3 flex items-center justify-between">
+                        <span><i class="fa-solid fa-sliders text-wine-600 mr-2"></i>シミュレーション操作パネル</span>
+                        <button id="btn-reset" class="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-2.5 py-1 rounded transition">
+                            <i class="fa-solid fa-rotate-left mr-1"></i>初期化
+                        </button>
+                    </h3>
+
+                    <!-- SECTION 1: Common Parameters -->
+                    <div class="space-y-4">
+                        <div class="text-xs font-bold text-gold-400 uppercase tracking-wider flex items-center gap-1">
+                            <i class="fa-solid fa-cubes"></i> 共通設定条件
+                        </div>
+
+                        <!-- P1 Participants -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <label class="text-gray-300 font-medium">第1部 参加人数</label>
+                                <span class="text-gold-400 font-bold" id="val-p1-num">12名</span>
+                            </div>
+                            <input type="range" id="input-p1-num" min="5" max="15" step="1" value="12" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                            <div class="flex justify-between text-[10px] text-gray-500 mt-0.5">
+                                <span>5名</span>
+                                <span>上限 15名 (15×50ml=750ml)</span>
+                            </div>
+                        </div>
+
+                        <!-- P1 Brands -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <label class="text-gray-300 font-medium">第1部 試飲ワイン銘柄数</label>
+                                <span class="text-gold-400 font-bold" id="val-p1-brands">12銘柄</span>
+                            </div>
+                            <input type="range" id="input-p1-brands" min="6" max="13" step="1" value="12" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                            <div class="text-[10px] text-gray-500 mt-0.5">※第1部開栓数 ＝ 試飲銘柄数 (1銘柄1本750ml固定)</div>
+                        </div>
+
+                        <!-- P1 Consumption Rate -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <label class="text-gray-300 font-medium">第1部 実消費率</label>
+                                <span class="text-gold-400 font-bold" id="val-p1-rate">80%</span>
+                            </div>
+                            <input type="range" id="input-p1-rate" min="50" max="100" step="5" value="80" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                            <div class="flex justify-between text-[10px] text-gray-500 mt-0.5">
+                                <span>50%</span>
+                                <span>初期値 80%</span>
+                                <span>100% (満額消費)</span>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-gray-800 pt-3"></div>
+
+                        <!-- P2 Participants -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <label class="text-gray-300 font-medium">第2部 参加人数</label>
+                                <span class="text-gold-400 font-bold" id="val-p2-num">8名</span>
+                            </div>
+                            <input type="range" id="input-p2-num" min="5" max="12" step="1" value="8" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                            <div class="text-[10px] text-gray-500 mt-0.5">※第1部人数 (12名) を超えられません</div>
+                        </div>
+
+                        <!-- P2 Brands -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <label class="text-gray-300 font-medium">第2部 使用ワイン銘柄数</label>
+                                <span class="text-gold-400 font-bold" id="val-p2-brands">5銘柄</span>
+                            </div>
+                            <input type="range" id="input-p2-brands" min="3" max="6" step="1" value="5" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                        </div>
+
+                        <!-- P2 Dose -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <label class="text-gray-300 font-medium">第2部 1人当たり提供目安量</label>
+                                <span class="text-gold-400 font-bold" id="val-p2-dose">80ml</span>
+                            </div>
+                            <div class="grid grid-cols-6 gap-1 mt-1">
+                                <button type="button" class="btn-dose text-xs py-1.5 rounded bg-gray-800 text-gray-300 border border-gray-700 hover:bg-wine-700" data-dose="50">50</button>
+                                <button type="button" class="btn-dose text-xs py-1.5 rounded bg-gray-800 text-gray-300 border border-gray-700 hover:bg-wine-700" data-dose="60">60</button>
+                                <button type="button" class="btn-dose text-xs py-1.5 rounded bg-gray-800 text-gray-300 border border-gray-700 hover:bg-wine-700" data-dose="70">70</button>
+                                <button type="button" class="btn-dose text-xs py-1.5 rounded bg-wine-700 text-white font-bold border border-wine-500" data-dose="80">80</button>
+                                <button type="button" class="btn-dose text-xs py-1.5 rounded bg-gray-800 text-gray-300 border border-gray-700 hover:bg-wine-700" data-dose="90">90</button>
+                                <button type="button" class="btn-dose text-xs py-1.5 rounded bg-gray-800 text-gray-300 border border-gray-700 hover:bg-wine-700" data-dose="100">100</button>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-gray-800 pt-3"></div>
+
+                        <!-- Wine Cost Settings -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[11px] text-gray-400 mb-1">平均希望小売価格</label>
+                                <div class="flex items-center">
+                                    <input type="number" id="input-price" min="1600" max="4000" step="100" value="2750" class="w-full bg-navy-900 border border-gray-700 rounded px-2 py-1 text-xs text-white">
+                                    <span class="text-xs text-gray-400 ml-1">円</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-gray-400 mb-1">仕入率 (%)</label>
+                                <div class="flex items-center">
+                                    <input type="number" id="input-cost-rate" min="55" max="75" step="1" value="65" class="w-full bg-navy-900 border border-gray-700 rounded px-2 py-1 text-xs text-white">
+                                    <span class="text-xs text-gray-400 ml-1">%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-[11px] text-gray-400 bg-navy-900/50 p-2 rounded border border-gray-800 flex justify-between">
+                            <span>平均仕入原価:</span>
+                            <span class="font-bold text-gold-400" id="val-cost-per-bottle">¥1,788 / 本</span>
+                        </div>
+
+                        <!-- P1 Fee -->
+                        <div>
+                            <label class="block text-[11px] text-gray-400 mb-1">第1部のみ 参加費</label>
+                            <div class="flex items-center">
+                                <input type="number" id="input-p1-fee" min="3500" max="5000" step="500" value="4000" class="w-full bg-navy-900 border border-gray-700 rounded px-2 py-1 text-xs text-white">
+                                <span class="text-xs text-gray-400 ml-1">円</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 2: CASE A & CASE B Settings -->
+                    <div class="border-t border-gray-800 pt-4 space-y-4">
+                        <!-- CASE A Readonly Info -->
+                        <div class="bg-navy-900 p-3 rounded border border-gray-800">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="font-bold text-gray-300">CASE A (理論モデル) 追加開栓</span>
+                                <span class="font-bold text-blue-400" id="val-caseA-add-bottles">5本 (自動計算)</span>
+                            </div>
+                            <div class="text-[10px] text-gray-500 mt-1">※不足量を満たすよう750ml単位で自動追加。変更不可。</div>
+                        </div>
+
+                        <!-- CASE B Manual Setting -->
+                        <div class="bg-wine-900/30 p-3 rounded border border-wine-700/50 space-y-2">
+                            <div class="flex justify-between items-center">
+                                <label class="text-xs font-bold text-wine-100">CASE B (実運用) 手動追加開栓本数</label>
+                                <span class="text-sm font-bold text-gold-400" id="val-caseB-add-bottles">1本</span>
+                            </div>
+                            <input type="range" id="input-caseB-add-bottles" min="0" max="6" step="1" value="1" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                            <div class="flex justify-between text-[10px] text-gray-400">
+                                <span>0本</span>
+                                <span>1本 (初期値)</span>
+                                <span>6本</span>
+                            </div>
+
+                            <!-- Empirical Guide Badge -->
+                            <div class="text-[10px] bg-navy-900/80 p-2 rounded text-gray-400 border border-gray-800 mt-2">
+                                <div class="font-semibold text-gray-300 mb-0.5"><i class="fa-solid fa-lightbulb text-gold-500 mr-1"></i>現場過去実績ガイド (参考表示):</div>
+                                <div id="val-empirical-guide" class="text-gold-400">第2部 8名: 0〜1本程度</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 3: Detailed Accordion for Brands and Measured Remaining Volume -->
+                    <div class="border-t border-gray-800 pt-3">
+                        <button type="button" id="btn-toggle-details" class="w-full py-2 px-3 bg-navy-900 hover:bg-gray-800 border border-gray-700 rounded text-xs font-bold text-gray-300 flex justify-between items-center transition">
+                            <span><i class="fa-solid fa-flask text-wine-500 mr-2"></i>CASE B 銘柄別実測残量＆追加割当 (詳細設定)</span>
+                            <i id="icon-toggle-details" class="fa-solid fa-chevron-down text-gray-500 transition-transform"></i>
+                        </button>
+
+                        <div id="panel-details" class="hidden mt-3 space-y-3 bg-navy-900/60 p-3 rounded border border-gray-800">
+                            <div class="text-[11px] text-gray-400 leading-tight">
+                                第2部で使用する銘柄の実測残量(ml)と、CASE B追加ボトルの個別割当を指定できます。全銘柄実測＋割当一致で「厳密判定」に昇格します。
+                            </div>
+
+                            <div id="container-brand-inputs" class="space-y-2.5">
+                                <!-- Dynamic Brand Inputs generated via JS -->
+                            </div>
+
+                            <div class="flex justify-between items-center pt-2 border-t border-gray-800 text-xs">
+                                <span class="text-gray-400">追加割当合計:</span>
+                                <span id="val-allocation-sum" class="font-bold text-white">0 本 / 設定 1 本</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Goal Profit Target Status -->
+                <div class="card-dark p-4 space-y-3">
+                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
+                        <i class="fa-solid fa-bullseye text-wine-500"></i> 目標利益判定 (12,000円案ベース)
+                    </h4>
+                    <div class="grid grid-cols-2 gap-3 text-xs">
+                        <div class="bg-navy-900 p-2.5 rounded border border-gray-800">
+                            <div class="text-[11px] text-gray-400">利益 20,000円 達成</div>
+                            <div class="mt-1 font-bold" id="target-20k-status">-</div>
+                            <div class="text-[10px] text-gray-500 mt-0.5" id="target-20k-diff">-</div>
+                        </div>
+                        <div class="bg-navy-900 p-2.5 rounded border border-gray-800">
+                            <div class="text-[11px] text-gray-400">利益 30,000円 達成</div>
+                            <div class="mt-1 font-bold" id="target-30k-status">-</div>
+                            <div class="text-[10px] text-gray-500 mt-0.5" id="target-30k-diff">-</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: Simulation Results & Charts (7 cols) -->
+            <div class="lg:col-span-7 space-y-6">
+
+                <!-- Comparison Table Card -->
+                <div class="card-dark p-5 space-y-4">
+                    <h3 class="text-base font-bold text-white border-b border-gray-800 pb-3 flex justify-between items-center">
+                        <span><i class="fa-solid fa-table-list text-gold-500 mr-2"></i>CASE A vs CASE B 試算比較一覧表</span>
+                        <span class="text-xs font-normal text-gray-400">通し会費 11,000円 / 12,000円 常時比較</span>
+                    </h3>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left text-gray-300">
+                            <thead class="text-[11px] text-gray-400 uppercase bg-navy-900 border-b border-gray-800">
+                                <tr>
+                                    <th class="py-2.5 px-3">計算項目</th>
+                                    <th class="py-2.5 px-3 text-center text-blue-300 bg-blue-950/30">CASE A (理論・保守)</th>
+                                    <th class="py-2.5 px-3 text-center text-wine-300 bg-wine-950/30">CASE B (手動設定)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-800/60">
+                                <tr>
+                                    <td class="py-2 px-3 font-medium text-gray-400">第1部実開栓 / 推計残量</td>
+                                    <td class="py-2 px-3 text-center" id="tbl-p1-opened-a">-</td>
+                                    <td class="py-2 px-3 text-center" id="tbl-p1-opened-b">-</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-3 font-medium text-gray-400">第2部追加開栓本数</td>
+                                    <td class="py-2 px-3 text-center font-bold text-blue-400" id="tbl-add-bottles-a">-</td>
+                                    <td class="py-2 px-3 text-center font-bold text-gold-400" id="tbl-add-bottles-b">-</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-3 font-medium text-gray-400">イベント総開栓本数</td>
+                                    <td class="py-2 px-3 text-center font-semibold" id="tbl-total-bottles-a">-</td>
+                                    <td class="py-2 px-3 text-center font-semibold" id="tbl-total-bottles-b">-</td>
+                                </tr>
+                                <tr class="bg-navy-900/40">
+                                    <td class="py-2 px-3 font-medium text-gray-300">ワイン総原価</td>
+                                    <td class="py-2 px-3 text-center font-semibold text-rose-300" id="tbl-wine-cost-a">-</td>
+                                    <td class="py-2 px-3 text-center font-semibold text-rose-300" id="tbl-wine-cost-b">-</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-3 font-medium text-gray-400">グラス総原価 + 料理総原価</td>
+                                    <td class="py-2 px-3 text-center" id="tbl-other-cost-a">-</td>
+                                    <td class="py-2 px-3 text-center" id="tbl-other-cost-b">-</td>
+                                </tr>
+                                <tr class="bg-navy-900/80 font-bold border-t border-gray-700">
+                                    <td class="py-2.5 px-3 text-gray-200">総費用 (ワイン+グラス+料理)</td>
+                                    <td class="py-2.5 px-3 text-center text-white" id="tbl-total-cost-a">-</td>
+                                    <td class="py-2.5 px-3 text-center text-white" id="tbl-total-cost-b">-</td>
+                                </tr>
+                                <!-- Revenue & Profit 11k -->
+                                <tr class="border-t-2 border-gray-800">
+                                    <td class="py-2 px-3 text-gray-300">11,000円案 総売上</td>
+                                    <td class="py-2 px-3 text-center" id="tbl-rev-11k-a">-</td>
+                                    <td class="py-2 px-3 text-center" id="tbl-rev-11k-b">-</td>
+                                </tr>
+                                <tr class="bg-blue-950/20">
+                                    <td class="py-2 px-3 font-bold text-gray-200">11,000円案 イベント利益 (率)</td>
+                                    <td class="py-2 px-3 text-center font-bold text-blue-300" id="tbl-profit-11k-a">-</td>
+                                    <td class="py-2 px-3 text-center font-bold text-emerald-400" id="tbl-profit-11k-b">-</td>
+                                </tr>
+                                <!-- Revenue & Profit 12k -->
+                                <tr class="border-t border-gray-800">
+                                    <td class="py-2 px-3 text-gold-400">12,000円案 総売上</td>
+                                    <td class="py-2 px-3 text-center text-gold-400" id="tbl-rev-12k-a">-</td>
+                                    <td class="py-2 px-3 text-center text-gold-400" id="tbl-rev-12k-b">-</td>
+                                </tr>
+                                <tr class="bg-gold-950/20 font-bold">
+                                    <td class="py-2.5 px-3 text-gold-300">12,000円案 イベント利益 (率)</td>
+                                    <td class="py-2.5 px-3 text-center text-gold-300" id="tbl-profit-12k-a">-</td>
+                                    <td class="py-2.5 px-3 text-center text-gold-300" id="tbl-profit-12k-b">-</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Verification Bar -->
+                    <div class="flex flex-wrap items-center justify-between text-xs bg-navy-900 p-2.5 rounded border border-gray-800 text-gray-400">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-check-double text-emerald-400"></i>
+                            <span>12,000円案 − 11,000円案 利益増額検算:</span>
+                        </div>
+                        <div class="font-bold text-white" id="val-check-diff">
+                            +¥0 (第2部 8名 × 1,000円 ＝ ¥8,000 一致)
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+
+                    <!-- Chart 1: P2 Participants vs Profit -->
+                    <div class="card-dark p-5 space-y-3">
+                        <h4 class="text-xs font-bold text-gray-300 uppercase tracking-wider flex justify-between items-center">
+                            <span id="title-chart-profit"><i class="fa-solid fa-chart-line text-blue-400 mr-2"></i>グラフ1: 第2部参加人数 (5〜12名) × イベント利益推移</span>
+                            <span class="text-[10px] text-gray-500 font-normal">※CASE Bは現在追加本数固定</span>
+                        </h4>
+                        <div class="h-64 relative">
+                            <canvas id="chart-profit-p2"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Chart 2: P2 Participants vs Additional Bottles -->
+                    <div class="card-dark p-5 space-y-3">
+                        <h4 class="text-xs font-bold text-gray-300 uppercase tracking-wider flex justify-between items-center">
+                            <span><i class="fa-solid fa-wine-bottle text-gold-500 mr-2"></i>グラフ2: 第2部参加人数 × 追加開栓本数 (理論 vs 手動)</span>
+                        </h4>
+                        <div class="h-48 relative">
+                            <canvas id="chart-bottles-p2"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Chart 3: CASE B Add Bottles vs Profit -->
+                    <div class="card-dark p-5 space-y-3">
+                        <h4 class="text-xs font-bold text-gray-300 uppercase tracking-wider flex justify-between items-center">
+                            <span><i class="fa-solid fa-chart-bar text-wine-500 mr-2"></i>グラフ3: CASE B 手動追加本数 (0〜6本) × 利益変化</span>
+                            <span class="text-[10px] text-gray-500 font-normal">追加1本あたり原価 1,788円低減</span>
+                        </h4>
+                        <div class="h-56 relative">
+                            <canvas id="chart-caseB-add-sensitivity"></canvas>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+
+        // Application State Object
+        const state = {
+            p1Num: 12,
+            p1Brands: 12,
+            p1Rate: 80, // %
+            p2Num: 8,
+            p2Brands: 5,
+            p2Dose: 80, // ml
+            price: 2750,
+            costRate: 65, // %
+            p1Fee: 4000,
+            caseBAddBottles: 1,
+            
+            // Accordion detail brand items
+            brandDetails: []
+        };
+
+        // Initialize brand details array based on p2Brands
+        function syncBrandDetails() {
+            const currentLen = state.brandDetails.length;
+            const targetLen = state.p2Brands;
+
+            if (currentLen < targetLen) {
+                for (let i = currentLen; i < targetLen; i++) {
+                    state.brandDetails.push({
+                        name: `ワイン ${i + 1}`,
+                        measuredRemaining: '', // string or number
+                        allocatedAddBottles: 0
+                    });
+                }
+            } else if (currentLen > targetLen) {
+                state.brandDetails = state.brandDetails.slice(0, targetLen);
+            }
+        }
+
+        // Utility: Number formatter
+        function fmtYen(val) {
+            return '¥' + Math.round(val).toLocaleString('ja-JP');
+        }
+
+        function fmtPercent(val) {
+            return (val).toFixed(1) + '%';
+        }
+
+        // Calculation Helpers
+        function getCostPerBottle() {
+            return state.price * (state.costRate / 100);
+        }
+
+        function getP1ConsumedPerBrand() {
+            return state.p1Num * 50 * (state.p1Rate / 100); // ml
+        }
+
+        function getP1EstRemainingPerBrand() {
+            return 750 - getP1ConsumedPerBrand(); // ml
+        }
+
+        function getP2ReqPerBrand() {
+            return state.p2Num * state.p2Dose; // ml
+        }
+
+        // CASE A Core Calculation
+        function calcCaseA(p1N = state.p1Num, p1B = state.p1Brands, p1R = state.p1Rate, p2N = state.p2Num, p2B = state.p2Brands, p2D = state.p2Dose) {
+            const p1ConsPerBrand = p1N * 50 * (p1R / 100);
+            const p1RemPerBrand = 750 - p1ConsPerBrand;
+            const p2ReqPerBrand = p2N * p2D;
+            
+            const addReqPerBrand = Math.max(0, p2ReqPerBrand - p1RemPerBrand);
+            const addBottlesPerBrand = Math.ceil(addReqPerBrand / 750);
+            const totalAddBottles = addBottlesPerBrand * p2B;
+            const totalOpenedBottles = p1B + totalAddBottles;
+
+            const wineCost = totalOpenedBottles * getCostPerBottle();
+            const glassCost = p1N * 1100;
+            const foodCost = (p2N + 1) * 5500; // Host 1 included
+            const totalCost = wineCost + glassCost + foodCost;
+
+            const p1OnlyNum = p1N - p2N;
+            const rev11k = (p1OnlyNum * state.p1Fee) + (p2N * 11000);
+            const rev12k = (p1OnlyNum * state.p1Fee) + (p2N * 12000);
+
+            const profit11k = rev11k - totalCost;
+            const profit12k = rev12k - totalCost;
+
+            const margin11k = rev11k > 0 ? (profit11k / rev11k) * 100 : 0;
+            const margin12k = rev12k > 0 ? (profit12k / rev12k) * 100 : 0;
+
+            // Physical Surplus
+            const surplusPerBrand = (p1RemPerBrand + (addBottlesPerBrand * 750)) - p2ReqPerBrand;
+            const totalSurplus = surplusPerBrand * p2B;
+
+            return {
+                addBottlesPerBrand,
+                totalAddBottles,
+                totalOpenedBottles,
+                wineCost,
+                glassCost,
+                foodCost,
+                totalCost,
+                rev11k,
+                rev12k,
+                profit11k,
+                profit12k,
+                margin11k,
+                margin12k,
+                surplusPerBrand,
+                totalSurplus
+            };
+        }
+
+        // CASE B Core Calculation
+        function calcCaseB(manualAddBottles = state.caseBAddBottles, p1N = state.p1Num, p1B = state.p1Brands, p1R = state.p1Rate, p2N = state.p2Num, p2B = state.p2Brands, p2D = state.p2Dose) {
+            const totalOpenedBottles = p1B + manualAddBottles;
+
+            const wineCost = totalOpenedBottles * getCostPerBottle();
+            const glassCost = p1N * 1100;
+            const foodCost = (p2N + 1) * 5500;
+            const totalCost = wineCost + glassCost + foodCost;
+
+            const p1OnlyNum = p1N - p2N;
+            const rev11k = (p1OnlyNum * state.p1Fee) + (p2N * 11000);
+            const rev12k = (p1OnlyNum * state.p1Fee) + (p2N * 12000);
+
+            const profit11k = rev11k - totalCost;
+            const profit12k = rev12k - totalCost;
+
+            const margin11k = rev11k > 0 ? (profit11k / rev11k) * 100 : 0;
+            const margin12k = rev12k > 0 ? (profit12k / rev12k) * 100 : 0;
+
+            return {
+                manualAddBottles,
+                totalOpenedBottles,
+                wineCost,
+                glassCost,
+                foodCost,
+                totalCost,
+                rev11k,
+                rev12k,
+                profit11k,
+                profit12k,
+                margin11k,
+                margin12k
+            };
+        }
+
+
+        function evaluateCaseBPhysics() {
+            syncBrandDetails();
+
+            // 1. Count measured brands
+            let measuredCount = 0;
+            state.brandDetails.forEach(b => {
+                if (b.measuredRemaining !== '' && !isNaN(Number(b.measuredRemaining)) && Number(b.measuredRemaining) >= 0) {
+                    measuredCount++;
+                }
+            });
+
+            const totalAllocatedBottles = state.brandDetails.reduce((sum, b) => sum + (Number(b.allocatedAddBottles) || 0), 0);
+            const isAllocationMatch = (totalAllocatedBottles === state.caseBAddBottles);
+
+            // Determine Mode (3-stage)
+            let mode = 'uniform'; // 'uniform', 'incomplete', 'strict'
+
+            if (measuredCount === 0) {
+                mode = 'uniform';
+            } else if (measuredCount === state.p2Brands && (state.caseBAddBottles === 0 || isAllocationMatch)) {
+                mode = 'strict';
+            } else {
+                mode = 'incomplete';
+            }
+
+            // Calculations
+            const p1EstRem = getP1EstRemainingPerBrand();
+            const p2ReqTotal = state.p2Num * state.p2Dose * state.p2Brands;
+
+            // Main Total Volume Check (Base on state.caseBAddBottles)
+            // Available Volume = Sum of remaining (measured or est) + (manualAddBottles * 750)
+            let remTotalAvailable = 0;
+            state.brandDetails.forEach(b => {
+                if (b.measuredRemaining !== '' && !isNaN(Number(b.measuredRemaining))) {
+                    remTotalAvailable += Number(b.measuredRemaining);
+                } else {
+                    remTotalAvailable += p1EstRem;
+                }
+            });
+
+            const mainTotalAvailable = remTotalAvailable + (state.caseBAddBottles * 750);
+            const mainTotalDiff = mainTotalAvailable - p2ReqTotal;
+
+            // Auxiliary Total Volume Check (If allocation mismatch exists)
+            const auxTotalAvailable = remTotalAvailable + (totalAllocatedBottles * 750);
+            const auxTotalDiff = auxTotalAvailable - p2ReqTotal;
+
+            // Brand-level Check
+            const brandCheckResults = [];
+            let brandCheckPossible = true;
+
+            if (!isAllocationMatch) {
+                brandCheckPossible = false;
+            } else {
+                state.brandDetails.forEach(b => {
+                    const rem = (b.measuredRemaining !== '' && !isNaN(Number(b.measuredRemaining))) 
+                        ? Number(b.measuredRemaining) 
+                        : p1EstRem;
+                    const avail = rem + ((Number(b.allocatedAddBottles) || 0) * 750);
+                    const req = state.p2Num * state.p2Dose;
+                    const diff = avail - req;
+
+                    brandCheckResults.push({
+                        name: b.name,
+                        avail,
+                        req,
+                        diff
+                    });
+                });
+            }
+
+            return {
+                mode, // 'uniform', 'incomplete', 'strict'
+                measuredCount,
+                totalAllocatedBottles,
+                isAllocationMatch,
+                mainTotalDiff,
+                auxTotalDiff,
+                brandCheckPossible,
+                brandCheckResults
+            };
+        }
+
+
+        // Chart Instances
+        let chartProfitP2 = null;
+        let chartBottlesP2 = null;
+        let chartCaseBSensitivity = null;
+
+        function updateUI() {
+            // Enforce constraints
+            if (state.p2Num > state.p1Num) {
+                state.p2Num = state.p1Num;
+                document.getElementById('input-p2-num').value = state.p2Num;
+            }
+            document.getElementById('input-p2-num').max = state.p1Num;
+
+            syncBrandDetails();
+
+            // Compute Models
+            const caseA = calcCaseA();
+            const caseB = calcCaseB();
+            const physB = evaluateCaseBPhysics();
+
+            // Update Label Displays
+            document.getElementById('val-p1-num').innerText = state.p1Num + '名';
+            document.getElementById('val-p1-brands').innerText = state.p1Brands + '銘柄';
+            document.getElementById('val-p1-rate').innerText = state.p1Rate + '%';
+            document.getElementById('val-p2-num').innerText = state.p2Num + '名';
+            document.getElementById('val-p2-brands').innerText = state.p2Brands + '銘柄';
+            document.getElementById('val-p2-dose').innerText = state.p2Dose + 'ml';
+            document.getElementById('val-cost-per-bottle').innerText = fmtYen(getCostPerBottle()) + ' / 本';
+            document.getElementById('val-caseA-add-bottles').innerText = caseA.totalAddBottles + '本 (自動計算)';
+            document.getElementById('val-caseB-add-bottles').innerText = state.caseBAddBottles + '本';
+
+            // Empirical Guide Badge Text
+            let guideText = '';
+            if (state.p2Num <= 7) guideText = `第2部 ${state.p2Num}名: 過去実績 0本程度`;
+            else if (state.p2Num <= 10) guideText = `第2部 ${state.p2Num}名: 過去実績 0〜1本程度`;
+            else guideText = `第2部 ${state.p2Num}名: 過去実績 2〜3本程度`;
+            document.getElementById('val-empirical-guide').innerText = guideText;
+
+            // Dose Button active styles
+            document.querySelectorAll('.btn-dose').forEach(btn => {
+                const dose = Number(btn.getAttribute('data-dose'));
+                if (dose === state.p2Dose) {
+                    btn.className = 'btn-dose text-xs py-1.5 rounded bg-wine-700 text-white font-bold border border-wine-500 shadow';
+                } else {
+                    btn.className = 'btn-dose text-xs py-1.5 rounded bg-gray-800 text-gray-300 border border-gray-700 hover:bg-wine-700';
+                }
+            });
+
+            // --- Top Dashboard Updates ---
+            // Block 1: Profitability
+            document.getElementById('db-caseA-profit11').innerText = fmtYen(caseA.profit11k);
+            document.getElementById('db-caseA-margin11').innerText = '率: ' + fmtPercent(caseA.margin11k);
+            document.getElementById('db-caseA-profit12').innerText = fmtYen(caseA.profit12k);
+            document.getElementById('db-caseA-margin12').innerText = '率: ' + fmtPercent(caseA.margin12k);
+
+            document.getElementById('db-caseB-addBottlesLabel').innerText = `追加 ${state.caseBAddBottles}本`;
+            document.getElementById('db-caseB-profit11').innerText = fmtYen(caseB.profit11k);
+            document.getElementById('db-caseB-margin11').innerText = '率: ' + fmtPercent(caseB.margin11k);
+            document.getElementById('db-caseB-profit12').innerText = fmtYen(caseB.profit12k);
+            document.getElementById('db-caseB-margin12').innerText = '率: ' + fmtPercent(caseB.margin12k);
+
+            // Block 2: Physical Feasibility Badge & Mode
+            const badgeEl = document.getElementById('db-phys-mode-badge');
+            if (physB.mode === 'uniform') {
+                badgeEl.innerText = '均一残量参考判定';
+                badgeEl.className = 'text-xs px-2 py-0.5 rounded font-bold bg-amber-950 text-amber-300 border border-amber-700/60';
+            } else if (physB.mode === 'incomplete') {
+                badgeEl.innerText = '実測未完備参考判定';
+                badgeEl.className = 'text-xs px-2 py-0.5 rounded font-bold bg-orange-950 text-orange-300 border border-orange-700/60';
+            } else {
+                badgeEl.innerText = '実測残量による厳密判定';
+                badgeEl.className = 'text-xs px-2 py-0.5 rounded font-bold bg-emerald-950 text-emerald-300 border border-emerald-700/60';
+            }
+
+            document.getElementById('db-caseA-phys-detail').innerText = `全銘柄充足 (全体余剰: +${caseA.totalSurplus.toLocaleString()} ml / 各銘柄 +${caseA.surplusPerBrand} ml)`;
+
+            // CASE B Phys Status & Main Total
+            const statusEl = document.getElementById('db-caseB-phys-status');
+            if (physB.mainTotalDiff >= 0) {
+                statusEl.innerText = '充足傾向';
+                statusEl.className = 'font-bold text-emerald-400';
+            } else {
+                statusEl.innerText = '物理量不足';
+                statusEl.className = 'font-bold text-rose-400';
+            }
+
+            const mainTotalText = physB.mainTotalDiff >= 0 
+                ? `現在設定ベース: +${physB.mainTotalDiff.toLocaleString()} ml 余剰`
+                : `現在設定ベース: ${physB.mainTotalDiff.toLocaleString()} ml 不足`;
+            document.getElementById('db-caseB-phys-total').innerText = '総量判定: ' + mainTotalText;
+
+            // Auxiliary text
+            const auxEl = document.getElementById('db-caseB-phys-aux');
+            if (!physB.isAllocationMatch) {
+                const auxValText = physB.auxTotalDiff >= 0 ? `+${physB.auxTotalDiff.toLocaleString()}ml余剰` : `${physB.auxTotalDiff.toLocaleString()}ml不足`;
+                auxEl.innerText = `[補助表示] 既存割当(${physB.totalAllocatedBottles}本)ベース参考値: ${auxValText}`;
+                auxEl.classList.remove('hidden');
+            } else {
+                auxEl.classList.add('hidden');
+            }
+
+            // Brand-level text
+            const brandEl = document.getElementById('db-caseB-phys-brand');
+            if (!physB.brandCheckPossible) {
+                brandEl.innerText = '銘柄別判定: 「設定本数と割当が不一致のため判定不可」';
+                brandEl.className = 'text-amber-400 text-[11px] mt-1 pt-1 border-t border-gray-800';
+            } else {
+                const deficitBrands = physB.brandCheckResults.filter(b => b.diff < 0);
+                if (deficitBrands.length === 0) {
+                    brandEl.innerText = '銘柄別判定: 全使用銘柄で提供量を満足';
+                    brandEl.className = 'text-emerald-400 text-[11px] mt-1 pt-1 border-t border-gray-800';
+                } else {
+                    // ① 最大不足量（最もマイナス幅が大きいもの）を正確に算出
+                    const maxDeficit = Math.min(...deficitBrands.map(b => b.diff));
+                    brandEl.innerText = `銘柄別判定: ${deficitBrands.length}銘柄で量不足 (最大 ${Math.abs(maxDeficit)} ml不足)`;
+                    brandEl.className = 'text-rose-400 text-[11px] mt-1 pt-1 border-t border-gray-800';
+                }
+            }
+
+            // Warning Banner
+            const warnEl = document.getElementById('db-phys-warning');
+            const warnTextEl = document.getElementById('db-phys-warning-text');
+            let warnings = [];
+
+            if (!physB.isAllocationMatch) {
+                warnings.push(`【警告：割当再設定要求】手動設定本数 (${state.caseBAddBottles}本) と銘柄別割当合計 (${physB.totalAllocatedBottles}本) が不一致です。割当を再指定してください。`);
+            }
+            if (physB.mainTotalDiff < 0) {
+                warnings.push(`【注意】現在設定条件では全体で ${Math.abs(physB.mainTotalDiff).toLocaleString()} ml 不足しています。提供量調整や追加開栓の検討が必要です。`);
+            }
+            if (physB.mode === 'uniform') {
+                warnings.push(`※現在は推計値による「均一残量参考判定」です。「確定」「厳密判定」ではありません。`);
+            } else if (physB.mode === 'incomplete') {
+                if (physB.measuredCount < state.p2Brands) {
+                    warnings.push(`※第2部使用${state.p2Brands}銘柄中${physB.measuredCount}銘柄のみ実測値のため「実測未完備参考判定」です。`);
+                }
+            }
+
+            if (warnings.length > 0) {
+                warnTextEl.innerHTML = warnings.join('<br>');
+                warnEl.classList.remove('hidden');
+            } else {
+                warnEl.classList.add('hidden');
+            }
+
+            // Block 3: Summary Comment Generation
+            const commentEl = document.getElementById('db-summary-comment');
+            let commentHtml = '';
+
+            const p1Rem = getP1EstRemainingPerBrand();
+            commentHtml += `<p class="mb-1">・<strong>CASE A (理論)</strong>: 安全側として ${caseA.totalAddBottles}本 追加開栓。12,000円案利益: <strong>${fmtYen(caseA.profit12k)}</strong> (${fmtPercent(caseA.margin12k)})。</p>`;
+            
+            commentHtml += `<p class="mb-1">・<strong>CASE B (試算)</strong>: 手動設定追加 ${state.caseBAddBottles}本。12,000円案試算利益: <strong>${fmtYen(caseB.profit12k)}</strong> (${fmtPercent(caseB.margin12k)})。</p>`;
+
+            if (caseB.profit12k >= 20000 && physB.mainTotalDiff < 0) {
+                commentHtml += `<p class="text-amber-300 font-semibold mt-1">【重要評価】CASE Bは採算上良好 (${fmtYen(caseB.profit12k)}) ですが、現在の提供条件 (${state.p2Dose}ml) ではワイン量に不足 (${Math.abs(physB.mainTotalDiff)}ml) があります。提供量を調整するか、追加開栓・使用銘柄の変更・実測残量の確認を行ってください。</p>`;
+            } else if (physB.mainTotalDiff >= 0) {
+                commentHtml += `<p class="text-emerald-300 font-semibold mt-1">【良好】採算性・ワイン提供量ともに安定したバランスです。</p>`;
+            } else {
+                commentHtml += `<p class="text-rose-300 font-semibold mt-1">【改善要求】ワイン量不足および収益性の観点から条件調整を推奨します。</p>`;
+            }
+            commentEl.innerHTML = commentHtml;
+
+
+            // --- Comparison Table Updates ---
+            document.getElementById('tbl-p1-opened-a').innerText = `${state.p1Brands}本 / 残${getP1EstRemainingPerBrand()}ml`;
+            document.getElementById('tbl-p1-opened-b').innerText = `${state.p1Brands}本 / 残${getP1EstRemainingPerBrand()}ml`;
+
+            document.getElementById('tbl-add-bottles-a').innerText = `${caseA.totalAddBottles} 本`;
+            document.getElementById('tbl-add-bottles-b').innerText = `${caseB.manualAddBottles} 本`;
+
+            document.getElementById('tbl-total-bottles-a').innerText = `${caseA.totalOpenedBottles} 本`;
+            document.getElementById('tbl-total-bottles-b').innerText = `${caseB.totalOpenedBottles} 本`;
+
+            document.getElementById('tbl-wine-cost-a').innerText = fmtYen(caseA.wineCost);
+            document.getElementById('tbl-wine-cost-b').innerText = fmtYen(caseB.wineCost);
+
+            document.getElementById('tbl-other-cost-a').innerText = fmtYen(caseA.glassCost + caseA.foodCost);
+            document.getElementById('tbl-other-cost-b').innerText = fmtYen(caseB.glassCost + caseB.foodCost);
+
+            document.getElementById('tbl-total-cost-a').innerText = fmtYen(caseA.totalCost);
+            document.getElementById('tbl-total-cost-b').innerText = fmtYen(caseB.totalCost);
+
+            document.getElementById('tbl-rev-11k-a').innerText = fmtYen(caseA.rev11k);
+            document.getElementById('tbl-rev-11k-b').innerText = fmtYen(caseB.rev11k);
+
+            document.getElementById('tbl-profit-11k-a').innerText = `${fmtYen(caseA.profit11k)} (${fmtPercent(caseA.margin11k)})`;
+            document.getElementById('tbl-profit-11k-b').innerText = `${fmtYen(caseB.profit11k)} (${fmtPercent(caseB.margin11k)})`;
+
+            document.getElementById('tbl-rev-12k-a').innerText = fmtYen(caseA.rev12k);
+            document.getElementById('tbl-rev-12k-b').innerText = fmtYen(caseB.rev12k);
+
+            document.getElementById('tbl-profit-12k-a').innerText = `${fmtYen(caseA.profit12k)} (${fmtPercent(caseA.margin12k)})`;
+            document.getElementById('tbl-profit-12k-b').innerText = `${fmtYen(caseB.profit12k)} (${fmtPercent(caseB.margin12k)})`;
+
+            // Revenue Difference Verification
+            const diffA = caseA.profit12k - caseA.profit11k;
+            const diffB = caseB.profit12k - caseB.profit11k;
+            const expectedDiff = state.p2Num * 1000;
+
+            if (diffA === expectedDiff && diffB === expectedDiff) {
+                document.getElementById('val-check-diff').innerHTML = `<span class="text-emerald-400">+${fmtYen(expectedDiff)} (第2部 ${state.p2Num}名 × 1,000円 一致)</span>`;
+            } else {
+                document.getElementById('val-check-diff').innerHTML = `<span class="text-rose-400 font-bold">【計算エラー：会費差額検算不一致】</span>`;
+            }
+
+            // --- Goal Profit Targets (Case B 12k basis) ---
+            const target20 = caseB.profit12k - 20000;
+            const t20El = document.getElementById('target-20k-status');
+            const t20DiffEl = document.getElementById('target-20k-diff');
+            if (caseB.profit12k >= 20000) {
+                t20El.innerText = '達成';
+                t20El.className = 'mt-1 font-bold text-emerald-400';
+                t20DiffEl.innerText = `+${fmtYen(target20)} 超過`;
+            } else {
+                t20El.innerText = '未達成';
+                t20El.className = 'mt-1 font-bold text-rose-400';
+                t20DiffEl.innerText = `あと ${fmtYen(Math.abs(target20))} 必要`;
+            }
+
+            const target30 = caseB.profit12k - 30000;
+            const t30El = document.getElementById('target-30k-status');
+            const t30DiffEl = document.getElementById('target-30k-diff');
+            if (caseB.profit12k >= 30000) {
+                t30El.innerText = '達成';
+                t30El.className = 'mt-1 font-bold text-emerald-400';
+                t30DiffEl.innerText = `+${fmtYen(target30)} 超過`;
+            } else {
+                t30El.innerText = '未達成';
+                t30El.className = 'mt-1 font-bold text-rose-400';
+                t30DiffEl.innerText = `あと ${fmtYen(Math.abs(target30))} 必要`;
+            }
+
+            // Allocation sum text in accordion
+            document.getElementById('val-allocation-sum').innerText = `${physB.totalAllocatedBottles} 本 / 設定 ${state.caseBAddBottles} 本`;
+
+            // Update Charts
+            renderCharts();
+        }
+
+
+        function renderBrandDetailInputs() {
+            const container = document.getElementById('container-brand-inputs');
+            container.innerHTML = '';
+
+            state.brandDetails.forEach((brand, idx) => {
+                const row = document.createElement('div');
+                row.className = 'grid grid-cols-12 gap-2 items-center bg-navy-900/90 p-2 rounded border border-gray-800 text-xs';
+
+                row.innerHTML = `
+                    <div class="col-span-4 font-semibold text-gray-300 truncate">
+                        <input type="text" value="${brand.name}" data-idx="${idx}" class="input-brand-name bg-transparent border-b border-gray-700 text-xs text-gold-400 focus:outline-none w-full">
+                    </div>
+                    <div class="col-span-4">
+                        <label class="block text-[9px] text-gray-500">実測残量(ml)</label>
+                        <input type="number" placeholder="推計: ${getP1EstRemainingPerBrand()}" value="${brand.measuredRemaining}" data-idx="${idx}" class="input-brand-measured bg-gray-800 border border-gray-700 rounded px-1.5 py-0.5 text-xs text-white w-full">
+                    </div>
+                    <div class="col-span-4">
+                        <label class="block text-[9px] text-gray-500">追加割当(本)</label>
+                        <select data-idx="${idx}" class="select-brand-alloc bg-gray-800 border border-gray-700 rounded px-1 py-0.5 text-xs text-white w-full">
+                            <option value="0" ${brand.allocatedAddBottles == 0 ? 'selected' : ''}>0本</option>
+                            <option value="1" ${brand.allocatedAddBottles == 1 ? 'selected' : ''}>1本</option>
+                            <option value="2" ${brand.allocatedAddBottles == 2 ? 'selected' : ''}>2本</option>
+                            <option value="3" ${brand.allocatedAddBottles == 3 ? 'selected' : ''}>3本</option>
+                        </select>
+                    </div>
+                `;
+
+                container.appendChild(row);
+            });
+
+            // Bind Event Listeners for dynamic inputs
+            document.querySelectorAll('.input-brand-name').forEach(el => {
+                el.addEventListener('change', (e) => {
+                    const idx = Number(e.target.getAttribute('data-idx'));
+                    state.brandDetails[idx].name = e.target.value;
+                    updateUI();
+                });
+            });
+
+            document.querySelectorAll('.input-brand-measured').forEach(el => {
+                el.addEventListener('input', (e) => {
+                    const idx = Number(e.target.getAttribute('data-idx'));
+                    state.brandDetails[idx].measuredRemaining = e.target.value;
+                    updateUI();
+                });
+            });
+
+            document.querySelectorAll('.select-brand-alloc').forEach(el => {
+                el.addEventListener('change', (e) => {
+                    const idx = Number(e.target.getAttribute('data-idx'));
+                    state.brandDetails[idx].allocatedAddBottles = Number(e.target.value);
+                    updateUI();
+                });
+            });
+        }
+
+
+        function renderCharts() {
+            // Dynamically limit P2 range max to min(12, P1 participants)
+            const maxP2 = Math.min(12, state.p1Num);
+            const p2Range = [];
+            for (let p = 5; p <= maxP2; p++) {
+                p2Range.push(p);
+            }
+            if (p2Range.length === 0) p2Range.push(5);
+
+            // ② グラフ1タイトルを現在の参加人数上限(maxP2)に合わせて動的更新
+            const titleChartProfit = document.getElementById('title-chart-profit');
+            if (titleChartProfit) {
+                titleChartProfit.innerHTML = `<i class="fa-solid fa-chart-line text-blue-400 mr-2"></i>グラフ1: 第2部参加人数 (5〜${maxP2}名) × イベント利益推移`;
+            }
+
+            // 1. Chart 1: P2 Participants vs Profit (4 series)
+            const c1CaseA11 = p2Range.map(p2 => calcCaseA(state.p1Num, state.p1Brands, state.p1Rate, p2, state.p2Brands, state.p2Dose).profit11k);
+            const c1CaseA12 = p2Range.map(p2 => calcCaseA(state.p1Num, state.p1Brands, state.p1Rate, p2, state.p2Brands, state.p2Dose).profit12k);
+            const c1CaseB11 = p2Range.map(p2 => calcCaseB(state.caseBAddBottles, state.p1Num, state.p1Brands, state.p1Rate, p2, state.p2Brands, state.p2Dose).profit11k);
+            const c1CaseB12 = p2Range.map(p2 => calcCaseB(state.caseBAddBottles, state.p1Num, state.p1Brands, state.p1Rate, p2, state.p2Brands, state.p2Dose).profit12k);
+
+            const ctx1 = document.getElementById('chart-profit-p2').getContext('2d');
+            if (chartProfitP2) chartProfitP2.destroy();
+            chartProfitP2 = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: p2Range.map(p => p + '名'),
+                    datasets: [
+                        { label: 'CASE A (11,000円)', data: c1CaseA11, borderColor: '#60a5fa', borderDash: [4, 4], borderWidth: 1.5, pointRadius: 2 },
+                        { label: 'CASE A (12,000円)', data: c1CaseA12, borderColor: '#3b82f6', borderWidth: 2, pointRadius: 3 },
+                        { label: 'CASE B (11,000円)', data: c1CaseB11, borderColor: '#f43f5e', borderDash: [4, 4], borderWidth: 1.5, pointRadius: 2 },
+                        { label: 'CASE B (12,000円)', data: c1CaseB12, borderColor: '#e5b23d', borderWidth: 2.5, pointRadius: 4 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#cbd5e1', font: { size: 10 } } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        y: { ticks: { color: '#94a3b8', callback: v => '¥' + (v/1000) + 'k' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                    }
+                }
+            });
+
+            // 2. Chart 2: P2 Participants vs Additional Bottles
+            const c2CaseA = p2Range.map(p2 => calcCaseA(state.p1Num, state.p1Brands, state.p1Rate, p2, state.p2Brands, state.p2Dose).totalAddBottles);
+            const c2CaseB = p2Range.map(() => state.caseBAddBottles);
+
+            const ctx2 = document.getElementById('chart-bottles-p2').getContext('2d');
+            if (chartBottlesP2) chartBottlesP2.destroy();
+            chartBottlesP2 = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: p2Range.map(p => p + '名'),
+                    datasets: [
+                        // ③ stepper → stepped へプロパティ名を修整 (Chart.js標準オプション)
+                        { label: 'CASE A 理論必要本数', data: c2CaseA, borderColor: '#60a5fa', backgroundColor: 'rgba(96, 165, 250, 0.2)', fill: true, stepped: true, borderWidth: 2 },
+                        { label: `CASE B 手動設定本数 (${state.caseBAddBottles}本)`, data: c2CaseB, borderColor: '#e5b23d', borderWidth: 2, borderDash: [5, 5], pointRadius: 0 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#cbd5e1', font: { size: 10 } } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        y: { min: 0, max: 10, ticks: { color: '#94a3b8', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                    }
+                }
+            });
+
+            // 3. Chart 3: CASE B Add Bottles (0-6) Sensitivity vs Profit
+            const bAddRange = [0, 1, 2, 3, 4, 5, 6];
+            const c3Profit11 = bAddRange.map(b => calcCaseB(b).profit11k);
+            const c3Profit12 = bAddRange.map(b => calcCaseB(b).profit12k);
+
+            const ctx3 = document.getElementById('chart-caseB-add-sensitivity').getContext('2d');
+            if (chartCaseBSensitivity) chartCaseBSensitivity.destroy();
+            chartCaseBSensitivity = new Chart(ctx3, {
+                type: 'bar',
+                data: {
+                    labels: bAddRange.map(b => b + '本追加'),
+                    datasets: [
+                        { label: '11,000円案 利益', data: c3Profit11, backgroundColor: 'rgba(100, 116, 139, 0.7)', borderRadius: 4 },
+                        { label: '12,000円案 利益', data: c3Profit12, backgroundColor: 'rgba(229, 178, 61, 0.85)', borderRadius: 4 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#cbd5e1', font: { size: 10 } } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { display: false } },
+                        y: { ticks: { color: '#94a3b8', callback: v => '¥' + (v/1000) + 'k' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                    }
+                }
+            });
+        }
+
+
+        function setupEventListeners() {
+            // Slider inputs
+            document.getElementById('input-p1-num').addEventListener('input', (e) => {
+                state.p1Num = Number(e.target.value);
+                updateUI();
+            });
+
+            document.getElementById('input-p1-brands').addEventListener('input', (e) => {
+                state.p1Brands = Number(e.target.value);
+                updateUI();
+            });
+
+            document.getElementById('input-p1-rate').addEventListener('input', (e) => {
+                state.p1Rate = Number(e.target.value);
+                updateUI();
+            });
+
+            document.getElementById('input-p2-num').addEventListener('input', (e) => {
+                state.p2Num = Number(e.target.value);
+                updateUI();
+            });
+
+            document.getElementById('input-p2-brands').addEventListener('input', (e) => {
+                state.p2Brands = Number(e.target.value);
+                syncBrandDetails();
+                renderBrandDetailInputs();
+                updateUI();
+            });
+
+            // P2 Dose buttons
+            document.querySelectorAll('.btn-dose').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const dose = Number(e.currentTarget.getAttribute('data-dose'));
+                    state.p2Dose = dose;
+                    updateUI();
+                });
+            });
+
+            // Price & Cost Rate & P1 Fee inputs
+            document.getElementById('input-price').addEventListener('input', (e) => {
+                state.price = Number(e.target.value);
+                updateUI();
+            });
+
+            document.getElementById('input-cost-rate').addEventListener('input', (e) => {
+                state.costRate = Number(e.target.value);
+                updateUI();
+            });
+
+            document.getElementById('input-p1-fee').addEventListener('input', (e) => {
+                state.p1Fee = Number(e.target.value);
+                updateUI();
+            });
+
+            // CASE B Manual Add Bottles Slider
+            document.getElementById('input-caseB-add-bottles').addEventListener('input', (e) => {
+                state.caseBAddBottles = Number(e.target.value);
+                updateUI();
+            });
+
+            // Detail Accordion Toggle
+            document.getElementById('btn-toggle-details').addEventListener('click', () => {
+                const panel = document.getElementById('panel-details');
+                const icon = document.getElementById('icon-toggle-details');
+                if (panel.classList.contains('hidden')) {
+                    panel.classList.remove('hidden');
+                    icon.classList.add('rotate-180');
+                } else {
+                    panel.classList.add('hidden');
+                    icon.classList.remove('rotate-180');
+                }
+            });
+
+            // Reset Button
+            document.getElementById('btn-reset').addEventListener('click', () => {
+                state.p1Num = 12;
+                state.p1Brands = 12;
+                state.p1Rate = 80;
+                state.p2Num = 8;
+                state.p2Brands = 5;
+                state.p2Dose = 80;
+                state.price = 2750;
+                state.costRate = 65;
+                state.p1Fee = 4000;
+                state.caseBAddBottles = 1;
+                state.brandDetails = [];
+
+                // Reset DOM Inputs
+                document.getElementById('input-p1-num').value = 12;
+                document.getElementById('input-p1-brands').value = 12;
+                document.getElementById('input-p1-rate').value = 80;
+                document.getElementById('input-p2-num').value = 8;
+                document.getElementById('input-p2-brands').value = 5;
+                document.getElementById('input-price').value = 2750;
+                document.getElementById('input-cost-rate').value = 65;
+                document.getElementById('input-p1-fee').value = 4000;
+                document.getElementById('input-caseB-add-bottles').value = 1;
+
+                const panel = document.getElementById('panel-details');
+                const icon = document.getElementById('icon-toggle-details');
+                if (panel) panel.classList.add('hidden');
+                if (icon) icon.classList.remove('rotate-180');
+
+                syncBrandDetails();
+                renderBrandDetailInputs();
+                updateUI();
+            });
+        }
+
+        // App Initialization
+        window.addEventListener('DOMContentLoaded', () => {
+            syncBrandDetails();
+            renderBrandDetailInputs();
+            setupEventListeners();
+            updateUI();
+        });
+    </script>
+</body>
+</html>
